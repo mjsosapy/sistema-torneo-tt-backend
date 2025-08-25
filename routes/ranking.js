@@ -576,9 +576,9 @@ router.get('/tournament/:id/results', async (req, res) => {
 // Obtener estadísticas generales del sistema
 router.get('/stats', async (req, res) => {
   try {
-    // Contar jugadores
+    // Contar jugadores (todos los activos, sin importar el rol)
     const totalPlayers = await prisma.player.count({
-      where: { role: 'Jugador' }
+      where: { activo: true }
     });
     
     // Contar torneos
@@ -595,7 +595,7 @@ router.get('/stats', async (req, res) => {
 
     // Calcular puntos totales y promedio
     const playersWithPoints = await prisma.player.findMany({
-      where: { role: 'Jugador' },
+      where: { activo: true },
       select: { puntos: true }
     });
     
@@ -605,7 +605,7 @@ router.get('/stats', async (req, res) => {
     // Obtener jugador con más puntos
     const topPlayer = await prisma.player.findFirst({
       select: { id: true, nombre: true, puntos: true },
-      where: { role: 'Jugador' },
+      where: { activo: true },
       orderBy: { puntos: 'desc' }
     });
 
