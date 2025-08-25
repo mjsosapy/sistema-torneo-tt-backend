@@ -158,6 +158,12 @@ router.get('/', async (req, res) => {
       include: {
         _count: {
           select: { matches: true }
+        },
+        tournamentResults: {
+          where: { posicionFinal: 1 }, // Solo el campeón (posición 1)
+          include: {
+            jugador: { select: { id: true, nombre: true } }
+          }
         }
       },
       orderBy: { [orderByField]: orderByDirection },
