@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id           Int      @id @default(autoincrement())
+  nombre       String
+  ranking      Int      @default(0)
+  puntos       Int      @default(0)
+  email        String   @unique
+  password     String
+  role         String   @default("Jugador")
+  telefono     String?
+  fechaNacimiento DateTime?
+  activo       Boolean  @default(true)
+  fechaBaja    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  // Relaciones
+  matches1     Match[]  @relation("Jugador1")
+  matches2     Match[]  @relation("Jugador2")
+  matchesGanados Match[] @relation("Ganador")
+  tournamentResults TournamentResult[]
+  groups       Group[]
+  
+  @@map("players")
+}
+
+model Tournament {
+  id            Int      @id @default(autoincrement())
+  nombre        String
+  tipo          String   // "Eliminación directa", "Doble eliminación", "Round Robin", "Grupos + Eliminación"
+  setsPorPartido Int     @default(3)
+  fechaInicio   DateTime
+  fechaFin      DateTime?
+  maxJugadores  Int      @default(16)
+  puntosPorSet  Int      @default(11)
+  descripcion   String?
+  estado        String   @default("Pendiente") // "Pendiente", "En curso", "Finalizado"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relaciones
+  matches       Match[]
+  groups        Group[]
+  tournamentResults TournamentResult[]
+  
+  @@map("tournaments")
+}
+
+model Match {
+  id          Int      @id @default(autoincrement())
+  torneo      Tournament @relation(fields: [torneoId], references: [id], onDelete: Cascade)
+  torneoId    Int
+  jugador1    Player    @relation("Jugador1", fields: [jugador1Id], references: [id])
+  jugador1Id  Int
+  jugador2    Player    @relation("Jugador2", fields: [jugador2Id], references: [id])
+  jugador2Id  Int
+  ganador     Player?   @relation("Ganador", fields: [ganadorId], references: [id])
+  ganadorId   Int?
+  setsJ1      Int       @default(0)
+  setsJ2      Int       @default(0)
+  ronda       Int
+  fase        String    @default("Principal") // "Principal", "Consolación"
+  estado      String    @default("Pendiente") // "Pendiente", "En curso", "Finalizado"
+  fecha       DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relaciones
+  sets        Set[]
+  
+  @@map("matches")
+}
+
+model Set {
+  id          Int      @id @default(autoincrement())
+  partido     Match    @relation(fields: [partidoId], references: [id], onDelete: Cascade)
+  partidoId   Int
+  numeroSet   Int      // 1, 2, 3, etc.
+  puntosJ1    Int      @default(0)
+  puntosJ2    Int      @default(0)
+  ganadorId   Int?     // ID del jugador que ganó este set
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([partidoId, numeroSet])
+  @@map("sets")
+}
+
+model Group {
+  id          Int      @id @default(autoincrement())
+  torneo      Tournament @relation(fields: [torneoId], references: [id], onDelete: Cascade)
+  torneoId    Int
+  nombre      String
+  jugadores   Player[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@map("groups")
+}
+
+model TournamentResult {
+  id          Int      @id @default(autoincrement())
+  torneo      Tournament @relation(fields: [torneoId], references: [id], onDelete: Cascade)
+  torneoId    Int
+  jugador     Player    @relation(fields: [jugadorId], references: [id])
+  jugadorId   Int
+  posicionFinal Int
+  puntosGanados Int
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@unique([torneoId, jugadorId])
+  @@map("tournament_results")
+}
+
